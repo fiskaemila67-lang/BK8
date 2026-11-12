@@ -1,0 +1,1560 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MPI BK: Perkembangan & Kenakalan Remaja</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <!-- XLSX Library CDN for Excel Export -->
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+    <!-- Confetti Library -->
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+        }
+        .font-display {
+            font-family: 'Fredoka', sans-serif;
+        }
+        .gradient-bg {
+            background: linear-gradient(135deg, #6366f1 0%, #a855f7 50%, #ec4899 100%);
+        }
+        .glass-card {
+            background: rgba(255, 255, 255, 0.92);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.6);
+        }
+        .flip-card {
+            perspective: 1000px;
+        }
+        .flip-card-inner {
+            transition: transform 0.6s;
+            transform-style: preserve-3d;
+        }
+        .flip-card.flipped .flip-card-inner {
+            transform: rotateY(180deg);
+        }
+        .flip-card-front, .flip-card-back {
+            backface-visibility: hidden;
+        }
+        .flip-card-back {
+            transform: rotateY(180deg);
+        }
+        @keyframes float {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-8px); }
+        }
+        .animate-float {
+            animation: float 4s ease-in-out infinite;
+        }
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 6px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: #F1F5F9;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: #CBD5E1;
+            border-radius: 4px;
+        }
+        @media print {
+            header, footer, .no-print {
+                display: none !important;
+            }
+            .print-area {
+                display: block !important;
+                width: 100% !important;
+            }
+        }
+    </style>
+</head>
+<body class="bg-gradient-to-br from-indigo-50/70 via-purple-50/40 to-pink-50/70 min-h-screen text-slate-800 flex flex-col justify-between selection:bg-purple-500 selection:text-white">
+
+    <!-- Toast Notification Modal -->
+    <div id="custom-toast" class="fixed bottom-6 right-6 z-50 transform translate-y-4 opacity-0 transition-all duration-300 pointer-events-none hidden">
+        <div class="bg-slate-900 text-white px-5 py-3 rounded-2xl shadow-xl flex items-center gap-3 border border-slate-700">
+            <div class="w-3 h-3 bg-emerald-400 rounded-full animate-ping"></div>
+            <span id="toast-message" class="text-xs md:text-sm font-semibold">Notifikasi berhasil</span>
+        </div>
+    </div>
+
+    <!-- Confirm Modal -->
+    <div id="custom-modal" class="fixed inset-0 z-50 bg-slate-950/60 backdrop-blur-sm flex items-center justify-center p-4 hidden">
+        <div class="bg-white rounded-3xl p-6 md:p-8 max-w-sm w-full shadow-2xl space-y-4 text-center border border-slate-100">
+            <div class="w-14 h-14 bg-rose-100 text-rose-600 rounded-2xl flex items-center justify-center mx-auto">
+                <i data-lucide="alert-circle" class="w-7 h-7"></i>
+            </div>
+            <h3 id="modal-title" class="font-display text-xl font-bold text-slate-800">Konfirmasi Aksi</h3>
+            <p id="modal-desc" class="text-xs md:text-sm text-slate-600">Apakah Anda yakin ingin melanjutkan tindakan ini?</p>
+            <div class="flex gap-3 pt-2">
+                <button onclick="closeConfirmModal()" class="flex-1 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold py-2.5 rounded-xl text-xs transition">Batal</button>
+                <button id="modal-confirm-btn" class="flex-1 bg-rose-600 hover:bg-rose-700 text-white font-bold py-2.5 rounded-xl text-xs transition shadow-md">Ya, Lanjutkan</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- HEADER NAVIGATION -->
+    <header class="gradient-bg text-white shadow-lg sticky top-0 z-40 backdrop-blur-md bg-opacity-95">
+        <div class="max-w-6xl mx-auto px-4 py-3.5 flex justify-between items-center">
+            <div class="flex items-center space-x-3 cursor-pointer group" onclick="navigateTo('home')">
+                <div class="bg-white/20 p-2.5 rounded-2xl backdrop-blur-md group-hover:scale-105 transition shadow-inner">
+                    <i data-lucide="graduation-cap" class="w-6 h-6 text-yellow-300"></i>
+                </div>
+                <div>
+                    <h1 class="font-display font-extrabold text-base md:text-lg tracking-tight leading-none">MPI BK SMPN 21 Semarang</h1>
+                    <p class="text-[11px] text-indigo-100 mt-1">Perkembangan & Kenakalan Remaja (SRA)</p>
+                </div>
+            </div>
+            <div class="flex items-center gap-2">
+                <button onclick="toggleSound()" id="sound-toggle-btn" class="bg-white/20 hover:bg-white/30 text-white p-2.5 rounded-xl text-xs font-bold transition flex items-center gap-1.5 backdrop-blur-md" title="Aktifkan/Matikan Suara">
+                    <i data-lucide="volume-2" class="w-4 h-4 text-amber-200"></i>
+                </button>
+                <button onclick="navigateTo('rekap')" class="bg-amber-400/30 hover:bg-amber-400/50 text-white px-3.5 py-2 rounded-xl text-xs md:text-sm font-bold transition flex items-center gap-1.5 backdrop-blur-md border border-amber-300/30">
+                    <i data-lucide="shield-check" class="w-4 h-4 text-amber-300"></i>
+                    <span class="hidden sm:inline">Portal Guru</span>
+                </button>
+                <button onclick="navigateTo('home')" class="bg-white/20 hover:bg-white/30 text-white px-3.5 py-2 rounded-xl text-xs md:text-sm font-bold transition flex items-center gap-1.5 backdrop-blur-md">
+                    <i data-lucide="home" class="w-4 h-4"></i>
+                    <span class="hidden sm:inline">Beranda</span>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- MAIN CONTENT CONTAINER -->
+    <main class="max-w-6xl mx-auto px-4 py-8 flex-grow w-full space-y-8">
+
+        <!-- ==================== 1. BERANDA / HOME ==================== -->
+        <section id="view-home" class="app-view space-y-8">
+            <!-- Hero Banner -->
+            <div class="gradient-bg rounded-[2.5rem] p-6 md:p-12 text-white shadow-xl relative overflow-hidden flex flex-col md:flex-row items-center justify-between gap-8">
+                <div class="absolute -right-16 -top-16 w-72 h-72 bg-white/10 rounded-full blur-3xl pointer-events-none"></div>
+                <div class="absolute -left-16 -bottom-16 w-72 h-72 bg-purple-500/20 rounded-full blur-3xl pointer-events-none"></div>
+                
+                <div class="relative z-10 max-w-xl space-y-4">
+                    <span class="inline-flex items-center gap-1.5 bg-amber-400 text-slate-900 text-xs font-extrabold px-3.5 py-1.5 rounded-full uppercase tracking-wider shadow-sm">
+                        <i data-lucide="sparkles" class="w-3.5 h-3.5"></i> Sekolah Ramah Anak (SRA)
+                    </span>
+                    <h2 class="font-display text-2xl md:text-4xl lg:text-5xl font-extrabold tracking-tight leading-tight">
+                        Pahami Dirimu, Jelajahi Masa Remaja dengan Bijak! ✨
+                    </h2>
+                    <p class="text-indigo-100 text-xs md:text-sm lg:text-base leading-relaxed">
+                        Media Pembelajaran Interaktif (MPI) Bimbingan dan Konseling SMP Negeri 21 Semarang. Kenali perubahan diri, kelola emosi, dan hindari perilaku berisiko secara menyenangkan.
+                    </p>
+                    <div class="pt-2 flex flex-wrap gap-3">
+                        <button onclick="navigateTo('materi')" class="bg-amber-400 hover:bg-amber-300 text-slate-900 font-extrabold px-6 py-3 rounded-2xl shadow-lg transition flex items-center gap-2 text-xs md:text-sm transform hover:-translate-y-0.5">
+                            <span>Mulai Eksplorasi Materi</span>
+                            <i data-lucide="arrow-right" class="w-4 h-4"></i>
+                        </button>
+                        <button onclick="navigateTo('formatif')" class="bg-white/20 hover:bg-white/30 text-white font-bold px-6 py-3 rounded-2xl backdrop-blur-md transition flex items-center gap-2 text-xs md:text-sm">
+                            <i data-lucide="gamepad-2" class="w-4 h-4 text-emerald-300"></i>
+                            <span>Mainkan Game Formatif</span>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="relative z-10 w-48 md:w-64 h-48 md:h-64 bg-white/10 rounded-3xl backdrop-blur-md border border-white/30 p-6 flex flex-col items-center justify-center text-center shadow-2xl animate-float">
+                    <div class="w-16 h-16 bg-yellow-400 text-slate-900 rounded-2xl flex items-center justify-center shadow-md mb-3">
+                        <i data-lucide="compass" class="w-8 h-8"></i>
+                    </div>
+                    <span class="font-display font-extrabold text-base md:text-lg">Fase D (Kelas VIII)</span>
+                    <span class="text-[11px] text-indigo-100 mt-1">SMP Negeri 21 Semarang</span>
+                </div>
+            </div>
+
+            <!-- Menu Grid -->
+            <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-5">
+                <div onclick="navigateTo('petunjuk')" class="glass-card p-6 rounded-3xl shadow-sm hover:shadow-xl transition cursor-pointer border border-white/80 flex items-start gap-4 group">
+                    <div class="w-12 h-12 bg-blue-100 text-blue-600 rounded-2xl flex items-center justify-center shrink-0 group-hover:scale-110 transition shadow-inner">
+                        <i data-lucide="compass" class="w-6 h-6"></i>
+                    </div>
+                    <div>
+                        <h3 class="font-display font-bold text-slate-800 group-hover:text-blue-600 transition text-base">Petunjuk Penggunaan</h3>
+                        <p class="text-xs text-slate-500 mt-1">Panduan praktis navigasi aplikasi untuk siswa & guru.</p>
+                    </div>
+                </div>
+
+                <div onclick="navigateTo('materi')" class="glass-card p-6 rounded-3xl shadow-sm hover:shadow-xl transition cursor-pointer border border-white/80 flex items-start gap-4 group">
+                    <div class="w-12 h-12 bg-purple-100 text-purple-600 rounded-2xl flex items-center justify-center shrink-0 group-hover:scale-110 transition shadow-inner">
+                        <i data-lucide="book-open" class="w-6 h-6"></i>
+                    </div>
+                    <div>
+                        <h3 class="font-display font-bold text-slate-800 group-hover:text-purple-600 transition text-base">Materi Multimodal & Video</h3>
+                        <p class="text-xs text-slate-500 mt-1">Teori psikologi perkembangan, kenakalan remaja, SRA & video.</p>
+                    </div>
+                </div>
+
+                <div onclick="navigateTo('formatif')" class="glass-card p-6 rounded-3xl shadow-sm hover:shadow-xl transition cursor-pointer border border-white/80 flex items-start gap-4 group">
+                    <div class="w-12 h-12 bg-emerald-100 text-emerald-600 rounded-2xl flex items-center justify-center shrink-0 group-hover:scale-110 transition shadow-inner">
+                        <i data-lucide="gamepad-2" class="w-6 h-6"></i>
+                    </div>
+                    <div>
+                        <h3 class="font-display font-bold text-slate-800 group-hover:text-emerald-600 transition text-base">Asesmen Formatif</h3>
+                        <p class="text-xs text-slate-500 mt-1">Game Edukasi Interaktif: Misi Detektif Remaja.</p>
+                    </div>
+                </div>
+
+                <div onclick="navigateTo('sumatif')" class="glass-card p-6 rounded-3xl shadow-sm hover:shadow-xl transition cursor-pointer border border-white/80 flex items-start gap-4 group">
+                    <div class="w-12 h-12 bg-amber-100 text-amber-600 rounded-2xl flex items-center justify-center shrink-0 group-hover:scale-110 transition shadow-inner">
+                        <i data-lucide="award" class="w-6 h-6"></i>
+                    </div>
+                    <div>
+                        <h3 class="font-display font-bold text-slate-800 group-hover:text-amber-600 transition text-base">Asesmen Sumatif</h3>
+                        <p class="text-xs text-slate-500 mt-1">10 Soal Pilihan Ganda Berstimulus (Level L1, L2, L3).</p>
+                    </div>
+                </div>
+
+                <div onclick="navigateTo('rekap')" class="glass-card p-6 rounded-3xl shadow-sm hover:shadow-xl transition cursor-pointer border border-indigo-200/80 flex items-start gap-4 group bg-gradient-to-br from-indigo-50/50 to-purple-50/50">
+                    <div class="w-12 h-12 bg-indigo-600 text-white rounded-2xl flex items-center justify-center shrink-0 group-hover:scale-110 transition shadow-md relative">
+                        <i data-lucide="file-spreadsheet" class="w-6 h-6"></i>
+                        <span class="absolute -top-1 -right-1 bg-amber-400 text-slate-900 text-[10px] font-extrabold px-1.5 py-0.5 rounded-full">Guru</span>
+                    </div>
+                    <div>
+                        <h3 class="font-display font-bold text-slate-800 group-hover:text-indigo-600 transition text-base">Portal Rekap Guru</h3>
+                        <p class="text-xs text-slate-500 mt-1">Akses nilai siswa, game, tanggapan video & ekspor Excel/PDF.</p>
+                    </div>
+                </div>
+
+                <div onclick="navigateTo('pustaka')" class="glass-card p-6 rounded-3xl shadow-sm hover:shadow-xl transition cursor-pointer border border-white/80 flex items-start gap-4 group">
+                    <div class="w-12 h-12 bg-pink-100 text-pink-600 rounded-2xl flex items-center justify-center shrink-0 group-hover:scale-110 transition shadow-inner">
+                        <i data-lucide="library" class="w-6 h-6"></i>
+                    </div>
+                    <div>
+                        <h3 class="font-display font-bold text-slate-800 group-hover:text-pink-600 transition text-base">Daftar Pustaka</h3>
+                        <p class="text-xs text-slate-500 mt-1">Referensi ilmiah literatur psikologi perkembangan.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ==================== 2. PETUNJUK PENGGUNAAN ==================== -->
+        <section id="view-petunjuk" class="app-view hidden space-y-6">
+            <div class="glass-card rounded-[2rem] p-6 md:p-8 shadow-md space-y-6">
+                <div class="flex items-center gap-3 pb-5 border-b border-slate-200/70">
+                    <div class="p-3 bg-blue-100 text-blue-600 rounded-2xl shadow-sm">
+                        <i data-lucide="compass" class="w-6 h-6"></i>
+                    </div>
+                    <div>
+                        <h2 class="font-display text-xl md:text-2xl font-bold text-slate-800">Petunjuk Penggunaan Aplikasi</h2>
+                        <p class="text-xs text-slate-500">Panduan navigasi praktis bagi Siswa dan Guru BK SMPN 21 Semarang</p>
+                    </div>
+                </div>
+
+                <div class="grid md:grid-cols-2 gap-5">
+                    <div class="bg-white/90 p-5 rounded-2xl border border-blue-100 shadow-xs flex gap-4 items-start">
+                        <div class="w-10 h-10 rounded-xl bg-blue-600 text-white font-extrabold flex items-center justify-center shrink-0 shadow-md">1</div>
+                        <div>
+                            <h4 class="font-bold text-slate-800 text-sm md:text-base">Eksplorasi Menu Utama</h4>
+                            <p class="text-xs text-slate-600 mt-1 leading-relaxed">Gunakan tombol beranda untuk memilih menu yang ingin dipelajari, mulai dari materi multimodal hingga asesmen.</p>
+                        </div>
+                    </div>
+                    <div class="bg-white/90 p-5 rounded-2xl border border-purple-100 shadow-xs flex gap-4 items-start">
+                        <div class="w-10 h-10 rounded-xl bg-purple-600 text-white font-extrabold flex items-center justify-center shrink-0 shadow-md">2</div>
+                        <div>
+                            <h4 class="font-bold text-slate-800 text-sm md:text-base">Pelajari Materi & Video</h4>
+                            <p class="text-xs text-slate-600 mt-1 leading-relaxed">Buka menu materi, klik kartu interaktif untuk membaca penjelasan psikologi remaja, tonton video edukasi, dan tuliskan tanggapanmu.</p>
+                        </div>
+                    </div>
+                    <div class="bg-white/90 p-5 rounded-2xl border border-emerald-100 shadow-xs flex gap-4 items-start">
+                        <div class="w-10 h-10 rounded-xl bg-emerald-600 text-white font-extrabold flex items-center justify-center shrink-0 shadow-md">3</div>
+                        <div>
+                            <h4 class="font-bold text-slate-800 text-sm md:text-base">Mainkan Game Formatif</h4>
+                            <p class="text-xs text-slate-600 mt-1 leading-relaxed">Selesaikan "Misi Detektif Remaja" untuk menguji kemampuan analisis kasus secara seru dan menyenangkan.</p>
+                        </div>
+                    </div>
+                    <div class="bg-white/90 p-5 rounded-2xl border border-amber-100 shadow-xs flex gap-4 items-start">
+                        <div class="w-10 h-10 rounded-xl bg-amber-600 text-white font-extrabold flex items-center justify-center shrink-0 shadow-md">4</div>
+                        <div>
+                            <h4 class="font-bold text-slate-800 text-sm md:text-base">Uji Kuis Sumatif & Portal Guru</h4>
+                            <p class="text-xs text-slate-600 mt-1 leading-relaxed">Jawab 10 soal pilihan ganda berstimulus (L1–L3). Hasil pengerjaan otomatis terekam di Portal Rekap Guru (`guru21` / `1234`).</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="p-4 bg-indigo-50 border border-indigo-200 rounded-2xl text-indigo-900 flex items-center gap-3">
+                    <i data-lucide="shield-check" class="w-6 h-6 text-indigo-600 shrink-0"></i>
+                    <p class="text-xs md:text-sm"><strong>Sekolah Ramah Anak (SRA):</strong> Aplikasi ini mendukung terciptanya lingkungan belajar yang aman, inklusif, komunikatif, dan bebas dari perundungan (*bullying*).</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- ==================== 3. MATERI MULTIMODAL & VIDEO ==================== -->
+        <section id="view-materi" class="app-view hidden space-y-6">
+            <div class="glass-card rounded-[2rem] p-6 md:p-8 shadow-md space-y-6">
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-5 border-b border-slate-200/70">
+                    <div class="flex items-center gap-3">
+                        <div class="p-3 bg-purple-100 text-purple-600 rounded-2xl shadow-sm">
+                            <i data-lucide="book-open" class="w-6 h-6"></i>
+                        </div>
+                        <div>
+                            <h2 class="font-display text-xl md:text-2xl font-bold text-slate-800">Materi Multimodal & Video Edukasi</h2>
+                            <p class="text-xs text-slate-500">Berdasarkan Santrock, Hurlock, Sarwono, & KPPPA (Sekolah Ramah Anak)</p>
+                        </div>
+                    </div>
+                    <!-- Sub Navigasi Materi -->
+                    <div class="flex flex-wrap gap-1.5 bg-slate-200/70 p-1 rounded-2xl text-xs font-bold">
+                        <button onclick="switchMateriSubTab('aspek')" id="btn-aspek" class="materi-sub-btn px-4 py-2 rounded-xl bg-white text-purple-700 shadow-sm transition">1. Aspek Remaja</button>
+                        <button onclick="switchMateriSubTab('kenakalan')" id="btn-kenakalan" class="materi-sub-btn px-4 py-2 rounded-xl text-slate-600 hover:text-slate-800 transition">2. Kenakalan Remaja</button>
+                        <button onclick="switchMateriSubTab('sra')" id="btn-sra" class="materi-sub-btn px-4 py-2 rounded-xl text-slate-600 hover:text-slate-800 transition">3. SRA & Regulasi</button>
+                        <button onclick="switchMateriSubTab('video')" id="btn-video" class="materi-sub-btn px-4 py-2 rounded-xl text-slate-600 hover:text-slate-800 transition">4. Video & Tanggapan</button>
+                    </div>
+                </div>
+
+                <!-- SUB TAB 1: ASPEK PERKEMBANGAN REMAJA -->
+                <div id="materi-aspek" class="materi-panel space-y-5">
+                    <div class="bg-gradient-to-r from-purple-500 to-indigo-600 p-6 rounded-3xl text-white shadow-md space-y-2">
+                        <span class="bg-white/20 px-3 py-1 rounded-full text-[11px] font-bold uppercase tracking-wider">Modul 1 • Psikologi Perkembangan</span>
+                        <h3 class="font-display text-xl md:text-2xl font-bold">Aspek Perkembangan Masa Remaja (Fase D SMP)</h3>
+                        <p class="text-xs md:text-sm text-purple-100 leading-relaxed">Masa remaja (usia 12–15 tahun) merupakan masa transisi dari anak-anak menuju dewasa yang ditandai dengan berbagai perubahan signifikan.</p>
+                    </div>
+
+                    <div class="grid sm:grid-cols-2 gap-4">
+                        <!-- Card 1 -->
+                        <div onclick="flipCard(this)" class="flip-card h-56 cursor-pointer">
+                            <div class="flip-card-inner relative w-full h-full rounded-3xl shadow-sm border border-slate-200">
+                                <div class="flip-card-front absolute inset-0 bg-white p-6 rounded-3xl flex flex-col justify-between">
+                                    <div class="w-10 h-10 bg-indigo-100 text-indigo-600 rounded-xl flex items-center justify-center">
+                                        <i data-lucide="zap" class="w-5 h-5"></i>
+                                    </div>
+                                    <div>
+                                        <h4 class="font-display font-bold text-slate-800 text-base mb-1">1. Perkembangan Fisik & Hormonal</h4>
+                                        <p class="text-xs text-slate-500">Pubertas, pertumbuhan tinggi pesat, dan gejolak energi.</p>
+                                    </div>
+                                    <span class="text-[10px] font-extrabold text-indigo-600 flex items-center gap-1">Klik untuk lihat detail ➔</span>
+                                </div>
+                                <div class="flip-card-back absolute inset-0 bg-indigo-600 text-white p-6 rounded-3xl flex flex-col justify-between">
+                                    <h4 class="font-display font-bold text-sm text-amber-300">Detail Perkembangan Fisik</h4>
+                                    <p class="text-xs leading-relaxed">Terjadi pematangan organ reproduksi, perubahan suara, pertumbuhan otot, serta produksi hormon yang terkadang memicu fluktuasi emosi mendadak (*storm and stress*).</p>
+                                    <span class="text-[10px] text-indigo-200">Klik untuk balik</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Card 2 -->
+                        <div onclick="flipCard(this)" class="flip-card h-56 cursor-pointer">
+                            <div class="flip-card-inner relative w-full h-full rounded-3xl shadow-sm border border-slate-200">
+                                <div class="flip-card-front absolute inset-0 bg-white p-6 rounded-3xl flex flex-col justify-between">
+                                    <div class="w-10 h-10 bg-purple-100 text-purple-600 rounded-xl flex items-center justify-center">
+                                        <i data-lucide="brain" class="w-5 h-5"></i>
+                                    </div>
+                                    <div>
+                                        <h4 class="font-display font-bold text-slate-800 text-base mb-1">2. Perkembangan Kognitif</h4>
+                                        <p class="text-xs text-slate-500">Berpikir abstrak, kritis, namun egosentris.</p>
+                                    </div>
+                                    <span class="text-[10px] font-extrabold text-purple-600 flex items-center gap-1">Klik untuk lihat detail ➔</span>
+                                </div>
+                                <div class="flip-card-back absolute inset-0 bg-purple-600 text-white p-6 rounded-3xl flex flex-col justify-between">
+                                    <h4 class="font-display font-bold text-sm text-amber-300">Detail Kognitif Remaja</h4>
+                                    <p class="text-xs leading-relaxed">Remaja mulai mampu berpikir hipotesis. Namun menurut David Elkind, muncul *egosentrisme remaja* (merasa selalu diperhatikan / *imaginary audience* dan merasa kebal risiko / *personal fable*).</p>
+                                    <span class="text-[10px] text-purple-200">Klik untuk balik</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Card 3 -->
+                        <div onclick="flipCard(this)" class="flip-card h-56 cursor-pointer">
+                            <div class="flip-card-inner relative w-full h-full rounded-3xl shadow-sm border border-slate-200">
+                                <div class="flip-card-front absolute inset-0 bg-white p-6 rounded-3xl flex flex-col justify-between">
+                                    <div class="w-10 h-10 bg-pink-100 text-pink-600 rounded-xl flex items-center justify-center">
+                                        <i data-lucide="users" class="w-5 h-5"></i>
+                                    </div>
+                                    <div>
+                                        <h4 class="font-display font-bold text-slate-800 text-base mb-1">3. Sosio-Emosional & Teman Sebaya</h4>
+                                        <p class="text-xs text-slate-500">Kebutuhan afiliasi & pencarian penerimaan kelompok.</p>
+                                    </div>
+                                    <span class="text-[10px] font-extrabold text-pink-600 flex items-center gap-1">Klik untuk lihat detail ➔</span>
+                                </div>
+                                <div class="flip-card-back absolute inset-0 bg-pink-600 text-white p-6 rounded-3xl flex flex-col justify-between">
+                                    <h4 class="font-display font-bold text-sm text-amber-300">Detail Sosio-Emosional</h4>
+                                    <p class="text-xs leading-relaxed">Kelompok teman sebaya (*peer group*) sangat berpengaruh. Remaja sangat ingin diakui dan diterima, yang kadang memicu tekanan teman sebaya (*peer pressure*).</p>
+                                    <span class="text-[10px] text-pink-200">Klik untuk balik</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Card 4 -->
+                        <div onclick="flipCard(this)" class="flip-card h-56 cursor-pointer">
+                            <div class="flip-card-inner relative w-full h-full rounded-3xl shadow-sm border border-slate-200">
+                                <div class="flip-card-front absolute inset-0 bg-white p-6 rounded-3xl flex flex-col justify-between">
+                                    <div class="w-10 h-10 bg-amber-100 text-amber-600 rounded-xl flex items-center justify-center">
+                                        <i data-lucide="fingerprint" class="w-5 h-5"></i>
+                                    </div>
+                                    <div>
+                                        <h4 class="font-display font-bold text-slate-800 text-base mb-1">4. Pencarian Identitas Diri</h4>
+                                        <p class="text-xs text-slate-500">Siapa aku? Menemukan nilai & minat pribadi.</p>
+                                    </div>
+                                    <span class="text-[10px] font-extrabold text-amber-600 flex items-center gap-1">Klik untuk lihat detail ➔</span>
+                                </div>
+                                <div class="flip-card-back absolute inset-0 bg-amber-600 text-white p-6 rounded-3xl flex flex-col justify-between">
+                                    <h4 class="font-display font-bold text-sm text-slate-900">Detail Identitas Diri (Erikson)</h4>
+                                    <p class="text-xs leading-relaxed">Menurut Erik Erikson, krisis utama remaja adalah *Identity vs. Role Confusion*. Remaja mencoba berbagai peran positif untuk menemukan jati diri yang mantap.</p>
+                                    <span class="text-[10px] text-amber-100">Klik untuk balik</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- SUB TAB 2: KENAKALAN REMAJA -->
+                <div id="materi-kenakalan" class="materi-panel hidden space-y-5">
+                    <div class="bg-gradient-to-r from-rose-500 to-orange-600 p-6 rounded-3xl text-white shadow-md space-y-2">
+                        <span class="bg-white/20 px-3 py-1 rounded-full text-[11px] font-bold uppercase tracking-wider">Modul 2 • Pencegahan Perilaku Berisiko</span>
+                        <h3 class="font-display text-xl md:text-2xl font-bold">Fenomena Kenakalan Remaja (Juvenile Delinquency)</h3>
+                        <p class="text-xs md:text-sm text-rose-100 leading-relaxed">Kenakalan remaja seringkali berkaitan erat dengan gejolak perkembangan emosi, rasa ingin tahu yang tinggi, serta konformitas negatif kelompok.</p>
+                    </div>
+
+                    <div class="grid sm:grid-cols-3 gap-4">
+                        <div class="bg-white p-5 rounded-3xl border border-slate-200 shadow-xs space-y-2">
+                            <div class="w-10 h-10 bg-rose-100 text-rose-600 rounded-xl flex items-center justify-center">
+                                <i data-lucide="shield-alert" class="w-5 h-5"></i>
+                            </div>
+                            <h4 class="font-display font-bold text-slate-800 text-sm">Konformitas Negatif</h4>
+                            <p class="text-xs text-slate-600 leading-relaxed">Ikut-ikutan melakukan pelanggaran aturan (membolos, tawuran, konvoi liar) hanya demi dibilang "solid" atau berani oleh gengnya.</p>
+                        </div>
+                        <div class="bg-white p-5 rounded-3xl border border-slate-200 shadow-xs space-y-2">
+                            <div class="w-10 h-10 bg-rose-100 text-rose-600 rounded-xl flex items-center justify-center">
+                                <i data-lucide="smartphone" class="w-5 h-5"></i>
+                            </div>
+                            <h4 class="font-display font-display font-bold text-slate-800 text-sm">Cyberbullying & Medsos</h4>
+                            <p class="text-xs text-slate-600 leading-relaxed">Menyebarkan komentar kebencian, foto candid memalukan, atau membuat akun anonim untuk merundung teman secara daring.</p>
+                        </div>
+                        <div class="bg-white p-5 rounded-3xl border border-slate-200 shadow-xs space-y-2">
+                            <div class="w-10 h-10 bg-rose-100 text-rose-600 rounded-xl flex items-center justify-center">
+                                <i data-lucide="alert-octagon" class="w-5 h-5"></i>
+                            </div>
+                            <h4 class="font-display font-bold text-slate-800 text-sm">Zat Adiktif & Rokok</h4>
+                            <p class="text-xs text-slate-600 leading-relaxed">Rasa ingin tahu mencoba rokok konvensional atau vape karena mengira hal tersebut membuat mereka terlihat lebih dewasa.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- SUB TAB 3: SEKOLAH RAMAH ANAK & REGULASI EMOSI -->
+                <div id="materi-sra" class="materi-panel hidden space-y-5">
+                    <div class="bg-gradient-to-r from-emerald-500 to-teal-600 p-6 rounded-3xl text-white shadow-md space-y-2">
+                        <span class="bg-white/20 px-3 py-1 rounded-full text-[11px] font-bold uppercase tracking-wider">Modul 3 • Solusi & Sekolah Ramah Anak</span>
+                        <h3 class="font-display text-xl md:text-2xl font-bold">Pengelolaan Emosi & Sekolah Ramah Anak (SRA)</h3>
+                        <p class="text-xs md:text-sm text-emerald-100 leading-relaxed">Bagaimana cara remaja mengendalikan gejolak emosi dan mewujudkan SMPN 21 Semarang sebagai lingkungan yang aman?</p>
+                    </div>
+
+                    <div class="grid sm:grid-cols-2 gap-4">
+                        <div class="bg-white p-5 rounded-3xl border border-emerald-100 shadow-xs space-y-2">
+                            <div class="flex items-center gap-2.5 text-emerald-800 font-bold text-sm">
+                                <i data-lucide="check-circle-2" class="w-5 h-5 text-emerald-600"></i>
+                                <span>Teknik Jeda 10 Detik (Regulasi Emosi)</span>
+                            </div>
+                            <p class="text-xs text-slate-600 leading-relaxed">Saat marah atau kesal, ambil napas dalam-dalam, hitung hingga 10 sebelum merespons. Ini mengaktifkan kembali otak berpikir logis (*prefrontal cortex*).</p>
+                        </div>
+                        <div class="bg-white p-5 rounded-3xl border border-emerald-100 shadow-xs space-y-2">
+                            <div class="flex items-center gap-2.5 text-emerald-800 font-bold text-sm">
+                                <i data-lucide="check-circle-2" class="w-5 h-5 text-emerald-600"></i>
+                                <span>Komunikasi Asertif</span>
+                            </div>
+                            <p class="text-xs text-slate-600 leading-relaxed">Berani menolak ajakan negatif teman dengan tegas namun sopan, serta menyampaikan pendapat tanpa menyakiti perasaan orang lain.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- SUB TAB 4: VIDEO & TANGGAPAN -->
+                <div id="materi-video" class="materi-panel hidden space-y-5">
+                    <div class="bg-gradient-to-r from-indigo-600 to-pink-600 p-6 rounded-3xl text-white shadow-md space-y-2">
+                        <span class="bg-white/20 px-3 py-1 rounded-full text-[11px] font-bold uppercase tracking-wider">Modul 4 • Audio Visual Edukatif</span>
+                        <h3 class="font-display text-xl md:text-2xl font-bold">Video Pembelajaran & Kolom Refleksi</h3>
+                        <p class="text-xs md:text-sm text-indigo-100 leading-relaxed">Tonton video edukasi berikut dengan cermat, lalu berikan tanggapan atau refleksi pribadimu.</p>
+                    </div>
+
+                    <!-- Responsive YouTube Embed Container -->
+                    <div class="relative w-full aspect-video rounded-3xl overflow-hidden shadow-xl border-4 border-white bg-slate-900">
+                        <iframe 
+                            class="w-full h-full" 
+                            src="https://www.youtube.com/embed/9FnYwciRPxE?start=76" 
+                            title="Video Edukasi Perkembangan Remaja" 
+                            frameborder="0" 
+                            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" 
+                            allowfullscreen>
+                        </iframe>
+                    </div>
+
+                    <!-- Kolom Tanggapan & Refleksi Video -->
+                    <div class="bg-white/90 rounded-3xl p-5 md:p-6 border border-purple-200 shadow-sm space-y-4">
+                        <div class="flex items-center gap-2.5 text-purple-900">
+                            <div class="p-2 bg-purple-100 text-purple-600 rounded-xl">
+                                <i data-lucide="message-square-plus" class="w-5 h-5"></i>
+                            </div>
+                            <div>
+                                <h4 class="font-extrabold text-sm md:text-base">Kolom Tanggapan & Refleksi Video</h4>
+                                <p class="text-[11px] text-slate-500">Tuliskan pendapat atau pelajaran berharga yang kamu dapatkan dari video di atas.</p>
+                            </div>
+                        </div>
+
+                        <form id="form-video-response" onsubmit="handleVideoResponseSubmit(event)" class="space-y-3">
+                            <div class="grid sm:grid-cols-2 gap-3">
+                                <div>
+                                    <label class="block text-xs font-bold text-slate-700 mb-1">Nama Lengkap:</label>
+                                    <input type="text" id="video-student-name" required placeholder="Nama lengkapmu..." class="w-full p-2.5 rounded-xl border border-slate-300 focus:ring-2 focus:ring-purple-500 focus:outline-none text-xs md:text-sm">
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-bold text-slate-700 mb-1">Kelas / No. Absen:</label>
+                                    <input type="text" id="video-student-class" required placeholder="Contoh: VIII-B / 08" class="w-full p-2.5 rounded-xl border border-slate-300 focus:ring-2 focus:ring-purple-500 focus:outline-none text-xs md:text-sm">
+                                </div>
+                            </div>
+                            <div>
+                                <label class="block text-xs font-bold text-slate-700 mb-1">Tanggapan / Refleksi Kamu:</label>
+                                <textarea id="video-student-comment" required rows="3" placeholder="Menurut saya, video tersebut mengajarkan bahwa di masa remaja kita perlu..." class="w-full p-3 rounded-xl border border-slate-300 focus:ring-2 focus:ring-purple-500 focus:outline-none text-xs md:text-sm"></textarea>
+                            </div>
+                            <button type="submit" class="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white font-bold px-5 py-2.5 rounded-xl shadow-md transition flex items-center gap-2 text-xs md:text-sm">
+                                <i data-lucide="send" class="w-4 h-4"></i>
+                                <span>Kirim Tanggapan Video</span>
+                            </button>
+                        </form>
+
+                        <!-- Daftar Tanggapan Terbaru -->
+                        <div class="pt-3 border-t border-slate-100 space-y-2.5">
+                            <h5 class="text-xs font-extrabold text-slate-600 uppercase tracking-wider flex items-center gap-1.5">
+                                <i data-lucide="messages-square" class="w-3.5 h-3.5 text-purple-600"></i>
+                                <span>Tanggapan Teman-Teman (<span id="video-comment-count">0</span>)</span>
+                            </h5>
+                            <div id="video-comments-list" class="space-y-2 max-h-60 overflow-y-auto pr-1">
+                                <p class="text-xs text-slate-400 italic">Belum ada tanggapan. Jadilah yang pertama memberikan pendapat!</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ==================== 4. ASESMEN FORMATIF (GAME MISI DETEKTIF REMAJA) ==================== -->
+        <section id="view-formatif" class="app-view hidden space-y-6">
+            <div class="glass-card rounded-[2rem] p-6 md:p-8 shadow-md space-y-6">
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-5 border-b border-slate-200/70">
+                    <div class="flex items-center gap-3">
+                        <div class="p-3 bg-gradient-to-br from-emerald-400 to-teal-600 text-white rounded-2xl shadow-md">
+                            <i data-lucide="gamepad-2" class="w-6 h-6"></i>
+                        </div>
+                        <div>
+                            <h2 class="font-display text-xl md:text-2xl font-bold text-slate-800">Game Edukasi: Misi Detektif Remaja</h2>
+                            <p class="text-xs text-slate-500">Analisis 6 kasus remaja & tentukan pilihan bijak sesuai nilai Sekolah Ramah Anak!</p>
+                        </div>
+                    </div>
+                    <div id="game-hud" class="hidden flex items-center gap-3 bg-emerald-50 border border-emerald-200 px-4 py-2 rounded-2xl">
+                        <div class="text-center">
+                            <span class="block text-[10px] font-bold text-emerald-700 uppercase">Skor</span>
+                            <span id="game-score-display" class="font-display font-extrabold text-lg text-emerald-800">0</span>
+                        </div>
+                        <div class="h-7 w-px bg-emerald-200"></div>
+                        <div class="text-center">
+                            <span class="block text-[10px] font-bold text-amber-600 uppercase">Streak 🔥</span>
+                            <span id="game-streak-display" class="font-display font-extrabold text-lg text-amber-700">0</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Layar Mulai Game (Input Identitas) -->
+                <div id="game-start-screen" class="max-w-lg mx-auto py-6 text-center space-y-5">
+                    <div class="w-20 h-20 bg-gradient-to-br from-emerald-400 to-teal-500 text-white rounded-3xl flex items-center justify-center mx-auto shadow-lg animate-float">
+                        <i data-lucide="search-check" class="w-10 h-10"></i>
+                    </div>
+                    <div>
+                        <h3 class="font-display text-xl font-bold text-slate-800">Siap Menjadi Detektif Remaja Tangguh?</h3>
+                        <p class="text-xs text-slate-600 mt-1">Masukkan identitasmu sebelum memulai misi. Hasil permainan akan otomatis tercatat di rekap Guru BK!</p>
+                    </div>
+                    <div class="space-y-3 text-left bg-white/80 p-5 rounded-2xl border border-emerald-100">
+                        <div>
+                            <label class="block text-xs font-bold text-slate-700 mb-1">Nama Lengkap Siswa:</label>
+                            <input type="text" id="game-student-name" placeholder="Tuliskan nama lengkapmu..." class="w-full p-3 rounded-xl border border-slate-300 focus:ring-2 focus:ring-emerald-500 focus:outline-none text-sm">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-slate-700 mb-1">Kelas / No. Absen:</label>
+                            <input type="text" id="game-student-class" placeholder="Contoh: VIII-C / 15" class="w-full p-3 rounded-xl border border-slate-300 focus:ring-2 focus:ring-emerald-500 focus:outline-none text-sm">
+                        </div>
+                    </div>
+                    <button onclick="startDetectiveGame()" class="w-full bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-white font-extrabold py-3.5 rounded-2xl shadow-lg transition flex items-center justify-center gap-2">
+                        <i data-lucide="play" class="w-5 h-5"></i>
+                        <span>Mulai Misi Sekarang!</span>
+                    </button>
+                </div>
+
+                <!-- Layar Bermain Game -->
+                <div id="game-play-screen" class="hidden space-y-5">
+                    <div class="flex items-center justify-between text-xs font-bold text-slate-600">
+                        <span id="game-mission-counter" class="bg-emerald-100 text-emerald-800 px-3 py-1 rounded-full">Misi 1 dari 6</span>
+                        <div class="w-40 bg-slate-200 h-2.5 rounded-full overflow-hidden">
+                            <div id="game-progress-bar" class="bg-emerald-500 h-full transition-all duration-300" style="width: 16.6%"></div>
+                        </div>
+                    </div>
+
+                    <div class="p-6 bg-white rounded-3xl border border-emerald-100 shadow-sm space-y-4">
+                        <div class="inline-flex items-center gap-1.5 px-3 py-1 bg-indigo-50 text-indigo-700 rounded-full text-xs font-bold">
+                            <i data-lucide="folder-search" class="w-3.5 h-3.5"></i>
+                            <span id="game-case-badge">Kasus Pertemanan</span>
+                        </div>
+                        <p id="game-scenario-text" class="text-sm md:text-base font-semibold text-slate-800 leading-relaxed"></p>
+                        
+                        <div id="game-options-container" class="grid sm:grid-cols-2 gap-3 pt-2">
+                            <!-- Options injected dynamically -->
+                        </div>
+
+                        <div id="game-feedback-box" class="hidden p-4 rounded-2xl text-xs md:text-sm space-y-2">
+                            <p id="game-feedback-title" class="font-extrabold"></p>
+                            <p id="game-feedback-desc" class="leading-relaxed"></p>
+                            <div class="pt-2 text-right">
+                                <button onclick="nextGameMission()" class="bg-slate-900 hover:bg-slate-800 text-white font-bold px-5 py-2 rounded-xl text-xs transition inline-flex items-center gap-1.5">
+                                    <span>Lanjut Misi Berikutnya</span>
+                                    <i data-lucide="arrow-right" class="w-4 h-4"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Layar Selesai Game -->
+                <div id="game-end-screen" class="hidden text-center py-8 space-y-4">
+                    <div class="w-20 h-20 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center mx-auto shadow-inner">
+                        <i data-lucide="medal" class="w-10 h-10"></i>
+                    </div>
+                    <h3 class="font-display text-2xl font-bold text-slate-800">Misi Detektif Selesai! 🎉</h3>
+                    <div id="game-final-score" class="text-4xl font-extrabold text-emerald-600">0 Poin</div>
+                    <p id="game-final-badge" class="inline-block px-4 py-1.5 bg-amber-100 text-amber-800 rounded-full text-xs font-extrabold"></p>
+                    <p class="text-xs md:text-sm text-slate-600 max-w-md mx-auto">Hebat! Hasil permainan formatifmu telah otomatis tersimpan ke dalam rekap Guru BK SMPN 21 Semarang.</p>
+                    <div class="flex flex-wrap justify-center gap-3 pt-2">
+                        <button onclick="resetDetectiveGame()" class="bg-slate-200 hover:bg-slate-300 text-slate-800 font-bold px-5 py-2.5 rounded-xl text-xs transition">Main Ulang</button>
+                        <button onclick="navigateTo('sumatif')" class="bg-amber-500 hover:bg-amber-600 text-white font-bold px-5 py-2.5 rounded-xl text-xs shadow transition">Lanjut ke Asesmen Sumatif →</button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ==================== 5. ASESMEN SUMATIF (10 SOAL BERSTIMULUS L1-L3) ==================== -->
+        <section id="view-sumatif" class="app-view hidden space-y-6">
+            <div class="glass-card rounded-[2rem] p-6 md:p-8 shadow-md space-y-6">
+                <div class="flex items-center gap-3 pb-5 border-b border-slate-200/70">
+                    <div class="p-3 bg-gradient-to-br from-amber-400 to-orange-500 text-white rounded-2xl shadow-md">
+                        <i data-lucide="award" class="w-6 h-6"></i>
+                    </div>
+                    <div>
+                        <h2 class="font-display text-xl md:text-2xl font-bold text-slate-800">Asesmen Sumatif Berstimulus</h2>
+                        <p class="text-xs text-slate-500">10 Soal Pilihan Ganda Studi Kasus (Level Kognitif L1, L2, dan L3)</p>
+                    </div>
+                </div>
+
+                <!-- Identitas Siswa -->
+                <div class="p-5 bg-amber-50/90 rounded-2xl border border-amber-200 grid sm:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs font-bold text-slate-800 mb-1">Nama Lengkap Siswa:</label>
+                        <input type="text" id="sumatif-student-name" placeholder="Tuliskan nama lengkapmu..." class="w-full p-2.5 rounded-xl border border-slate-300 focus:ring-2 focus:ring-amber-500 focus:outline-none text-sm bg-white">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-slate-800 mb-1">Kelas / No. Absen:</label>
+                        <input type="text" id="sumatif-student-class" placeholder="Contoh: VIII-A / 10" class="w-full p-2.5 rounded-xl border border-slate-300 focus:ring-2 focus:ring-amber-500 focus:outline-none text-sm bg-white">
+                    </div>
+                </div>
+
+                <!-- Daftar 10 Soal -->
+                <div id="sumatif-questions-list" class="space-y-6"></div>
+
+                <button onclick="submitSumatifQuiz()" class="w-full bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white font-extrabold py-4 rounded-2xl shadow-lg transition flex items-center justify-center gap-2 text-sm">
+                    <i data-lucide="check-circle-2" class="w-5 h-5"></i>
+                    <span>Kirim Jawaban & Lihat Skor Akhir</span>
+                </button>
+
+                <!-- Hasil Skor Sumatif -->
+                <div id="sumatif-result-box" class="hidden p-6 bg-white rounded-3xl border-2 border-amber-300 text-center space-y-3 shadow-lg">
+                    <div class="w-16 h-16 bg-amber-100 text-amber-600 rounded-2xl flex items-center justify-center mx-auto">
+                        <i data-lucide="trophy" class="w-9 h-9"></i>
+                    </div>
+                    <h3 class="font-display text-xl font-bold text-slate-800">Hasil Asesmen Sumatif Kamu</h3>
+                    <div id="sumatif-final-score" class="text-4xl font-extrabold text-amber-600">0 / 100</div>
+                    <p id="sumatif-feedback-msg" class="text-xs md:text-sm text-slate-600 max-w-lg mx-auto"></p>
+                    <p class="text-[11px] text-emerald-700 font-semibold">✔ Nilai telah otomatis dikirim ke Portal Rekap Guru BK.</p>
+                    <button onclick="resetSumatifQuiz()" class="mt-2 bg-slate-800 hover:bg-slate-900 text-white font-bold px-5 py-2.5 rounded-xl text-xs transition inline-flex items-center gap-1.5">
+                        <i data-lucide="rotate-ccw" class="w-4 h-4"></i>
+                        <span>Ulangi Asesmen</span>
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <!-- ==================== 6. DAFTAR PUSTAKA ==================== -->
+        <section id="view-pustaka" class="app-view hidden">
+            <div class="glass-card rounded-[2rem] p-6 md:p-8 shadow-md space-y-5">
+                <div class="flex items-center gap-3 pb-4 border-b border-slate-200/70">
+                    <div class="p-3 bg-pink-100 text-pink-600 rounded-2xl">
+                        <i data-lucide="library" class="w-6 h-6"></i>
+                    </div>
+                    <div>
+                        <h2 class="font-display text-xl font-bold text-slate-800">Daftar Pustaka</h2>
+                        <p class="text-xs text-slate-500">Referensi ilmiah psikologi perkembangan remaja & Sekolah Ramah Anak</p>
+                    </div>
+                </div>
+                <ul class="space-y-3 text-xs md:text-sm text-slate-700">
+                    <li class="p-4 bg-white/90 rounded-2xl border border-slate-200/80">
+                        <strong>Erikson, E. H.</strong> (1968). <em>Identity: Youth and Crisis</em>. New York: W. W. Norton & Company.
+                    </li>
+                    <li class="p-4 bg-white/90 rounded-2xl border border-slate-200/80">
+                        <strong>Hurlock, E. B.</strong> (2011). <em>Psikologi Perkembangan: Suatu Pendekatan Sepanjang Rentang Kehidupan</em> (Edisi Kelima). Jakarta: Erlangga.
+                    </li>
+                    <li class="p-4 bg-white/90 rounded-2xl border border-slate-200/80">
+                        <strong>Kartono, K.</strong> (2014). <em>Patologi Sosial 2: Kenakalan Remaja</em>. Jakarta: Rajawali Pers.
+                    </li>
+                    <li class="p-4 bg-white/90 rounded-2xl border border-slate-200/80">
+                        <strong>Kementerian Pemberdayaan Perempuan dan Perlindungan Anak (KPPPA).</strong> (2015). <em>Panduan Sekolah Ramah Anak (SRA)</em>. Jakarta: KPPPA RI.
+                    </li>
+                    <li class="p-4 bg-white/90 rounded-2xl border border-slate-200/80">
+                        <strong>Santrock, J. W.</strong> (2019). <em>Adolescence</em> (17th ed.). New York: McGraw-Hill Education.
+                    </li>
+                    <li class="p-4 bg-white/90 rounded-2xl border border-slate-200/80">
+                        <strong>Sarwono, S. W.</strong> (2016). <em>Psikologi Remaja</em> (Edisi Revisi). Jakarta: PT RajaGrafindo Persada.
+                    </li>
+                </ul>
+            </div>
+        </section>
+
+        <!-- ==================== 7. PROFIL PENGEMBANG ==================== -->
+        <section id="view-pengembang" class="app-view hidden">
+            <div class="glass-card rounded-[2rem] p-6 md:p-8 shadow-md">
+                <div class="flex items-center gap-3 pb-4 border-b border-slate-200/70 mb-6">
+                    <div class="p-3 bg-cyan-100 text-cyan-600 rounded-2xl">
+                        <i data-lucide="user-check" class="w-6 h-6"></i>
+                    </div>
+                    <div>
+                        <h2 class="font-display text-xl font-bold text-slate-800">Profil Pengembang</h2>
+                        <p class="text-xs text-slate-500">Pengembang Multimedia Pembelajaran Interaktif BK</p>
+                    </div>
+                </div>
+
+                <div class="max-w-md mx-auto bg-white rounded-3xl p-7 border border-slate-200/80 shadow-sm text-center space-y-4">
+                    <div class="w-24 h-24 bg-gradient-to-br from-indigo-500 via-purple-500 to-pink-500 rounded-3xl flex items-center justify-center text-white font-display text-3xl font-bold mx-auto shadow-lg">
+                        FE
+                    </div>
+                    <div>
+                        <h3 class="font-display text-xl font-bold text-slate-800">Fiska Emila</h3>
+                        <p class="text-xs font-bold text-purple-600 mt-1">Guru Bimbingan dan Konseling • SMP Negeri 21 Semarang</p>
+                    </div>
+                    <p class="text-xs text-slate-600 leading-relaxed bg-slate-50 p-4 rounded-2xl border border-slate-100">
+                        "Setiap remaja memiliki potensi luar biasa untuk tumbuh menjadi pribadi yang tangguh, berempati, dan berkarakter. Mari wujudkan SMP Negeri 21 Semarang sebagai Sekolah Ramah Anak yang aman dan membahagiakan!"
+                    </p>
+                </div>
+            </div>
+        </section>
+
+        <!-- ==================== 8. PORTAL REKAP GURU (guru21 / 1234) ==================== -->
+        <section id="view-rekap" class="app-view hidden">
+            <div class="glass-card rounded-[2rem] p-6 md:p-8 shadow-md">
+                <!-- Form Login Guru -->
+                <div id="guru-login-panel" class="max-w-md mx-auto py-6 space-y-5">
+                    <div class="text-center space-y-2">
+                        <div class="w-16 h-16 bg-indigo-100 text-indigo-600 rounded-2xl flex items-center justify-center mx-auto">
+                            <i data-lucide="shield-alert" class="w-8 h-8"></i>
+                        </div>
+                        <h2 class="font-display text-2xl font-bold text-slate-800">Portal Rekap Guru BK</h2>
+                        <p class="text-xs text-slate-500">Silakan login untuk melihat & mengunduh hasil asesmen murid.</p>
+                    </div>
+
+                    <form onsubmit="handleGuruLogin(event)" class="space-y-4 bg-white p-6 rounded-3xl border border-slate-200/80 shadow-sm">
+                        <div>
+                            <label class="block text-xs font-bold text-slate-700 mb-1">Username (guru21)</label>
+                            <input type="text" id="guru-username" required placeholder="Masukkan username..." class="w-full p-3 rounded-xl border border-slate-300 focus:ring-2 focus:ring-indigo-500 focus:outline-none text-sm">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-slate-700 mb-1">Password (1234)</label>
+                            <input type="password" id="guru-password" required placeholder="Masukkan password..." class="w-full p-3 rounded-xl border border-slate-300 focus:ring-2 focus:ring-indigo-500 focus:outline-none text-sm">
+                        </div>
+                        <p id="guru-login-error" class="hidden text-xs font-bold text-rose-600 bg-rose-50 p-2.5 rounded-xl border border-rose-200">
+                            Username atau password tidak sesuai! Gunakan guru21 / 1234
+                        </p>
+                        <button type="submit" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 rounded-xl shadow-md transition flex items-center justify-center gap-2 text-sm">
+                            <i data-lucide="log-in" class="w-4 h-4"></i>
+                            <span>Masuk ke Portal Guru</span>
+                        </button>
+                    </form>
+                </div>
+
+                <!-- Dashboard Rekap Guru -->
+                <div id="guru-dashboard-panel" class="hidden space-y-8">
+                    <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-5 border-b border-slate-200">
+                        <div>
+                            <h2 class="font-display text-xl md:text-2xl font-bold text-slate-800">Rekap Hasil Layanan Klasikal BK</h2>
+                            <p class="text-xs text-slate-500">SMP Negeri 21 Semarang • Materi Perkembangan & Kenakalan Remaja</p>
+                        </div>
+                        <div class="flex flex-wrap gap-2 no-print">
+                            <button onclick="downloadExcelReport()" class="bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold px-4 py-2.5 rounded-xl shadow transition flex items-center gap-1.5">
+                                <i data-lucide="file-spreadsheet" class="w-4 h-4"></i>
+                                <span>Unduh Excel (.xlsx)</span>
+                            </button>
+                            <button onclick="window.print()" class="bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold px-4 py-2.5 rounded-xl shadow transition flex items-center gap-1.5">
+                                <i data-lucide="printer" class="w-4 h-4"></i>
+                                <span>Cetak / Unduh PDF</span>
+                            </button>
+                            <button onclick="confirmClearAllRecords()" class="bg-slate-200 hover:bg-slate-300 text-slate-700 text-xs font-bold px-3.5 py-2.5 rounded-xl transition flex items-center gap-1.5">
+                                <i data-lucide="trash-2" class="w-4 h-4"></i>
+                                <span>Reset Data</span>
+                            </button>
+                            <button onclick="handleGuruLogout()" class="bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold px-3.5 py-2.5 rounded-xl transition flex items-center gap-1.5">
+                                <i data-lucide="log-out" class="w-4 h-4"></i>
+                                <span>Keluar</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Tabel 1: Asesmen Sumatif -->
+                    <div class="print-area space-y-3">
+                        <div class="flex items-center justify-between">
+                            <h3 class="font-extrabold text-sm md:text-base text-slate-800 flex items-center gap-2">
+                                <i data-lucide="award" class="w-5 h-5 text-amber-500"></i>
+                                <span>1. Rekap Nilai Asesmen Sumatif (10 Soal L1–L3)</span>
+                            </h3>
+                            <span id="count-sumatif" class="text-xs font-bold text-slate-500">0 Data</span>
+                        </div>
+                        <div class="overflow-x-auto bg-white rounded-2xl border border-slate-200">
+                            <table class="w-full text-left text-xs">
+                                <thead class="bg-slate-50 text-slate-700 font-extrabold uppercase border-b border-slate-200">
+                                    <tr>
+                                        <th class="p-3">Waktu</th>
+                                        <th class="p-3">Nama Murid</th>
+                                        <th class="p-3">Kelas / Absen</th>
+                                        <th class="p-3 text-center">Skor</th>
+                                        <th class="p-3">Keterangan</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="tbody-sumatif" class="divide-y divide-slate-100"></tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- Tabel 2: Asesmen Formatif (Game Detektif) -->
+                    <div class="print-area space-y-3">
+                        <div class="flex items-center justify-between">
+                            <h3 class="font-extrabold text-sm md:text-base text-slate-800 flex items-center gap-2">
+                                <i data-lucide="gamepad-2" class="w-5 h-5 text-emerald-600"></i>
+                                <span>2. Rekap Asesmen Formatif (Game Misi Detektif Remaja)</span>
+                            </h3>
+                            <span id="count-formatif" class="text-xs font-bold text-slate-500">0 Data</span>
+                        </div>
+                        <div class="overflow-x-auto bg-white rounded-2xl border border-slate-200">
+                            <table class="w-full text-left text-xs">
+                                <thead class="bg-slate-50 text-slate-700 font-extrabold uppercase border-b border-slate-200">
+                                    <tr>
+                                        <th class="p-3">Waktu</th>
+                                        <th class="p-3">Nama Murid</th>
+                                        <th class="p-3">Kelas / Absen</th>
+                                        <th class="p-3 text-center">Skor Game</th>
+                                        <th class="p-3">Predikat Detektif</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="tbody-formatif" class="divide-y divide-slate-100"></tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- Tabel 3: Tanggapan Video -->
+                    <div class="print-area space-y-3">
+                        <div class="flex items-center justify-between">
+                            <h3 class="font-extrabold text-sm md:text-base text-slate-800 flex items-center gap-2">
+                                <i data-lucide="youtube" class="w-5 h-5 text-rose-600"></i>
+                                <span>3. Rekap Refleksi & Tanggapan Video Pembelajaran</span>
+                            </h3>
+                            <span id="count-video" class="text-xs font-bold text-slate-500">0 Data</span>
+                        </div>
+                        <div class="overflow-x-auto bg-white rounded-2xl border border-slate-200">
+                            <table class="w-full text-left text-xs">
+                                <thead class="bg-slate-50 text-slate-700 font-extrabold uppercase border-b border-slate-200">
+                                    <tr>
+                                        <th class="p-3">Waktu</th>
+                                        <th class="p-3">Nama Murid</th>
+                                        <th class="p-3">Kelas / Absen</th>
+                                        <th class="p-3">Isi Tanggapan Video</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="tbody-video" class="divide-y divide-slate-100"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- FOOTER -->
+    <footer class="bg-white/80 backdrop-blur-md border-t border-slate-200/80 py-4 mt-8">
+        <div class="max-w-6xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between text-xs text-slate-500 gap-2">
+            <p>© 2026 Layanan Klasikal BK • <strong>SMP Negeri 21 Semarang</strong> (Sekolah Ramah Anak)</p>
+            <p>Pengembang: <strong class="text-purple-700">Fiska Emila</strong></p>
+        </div>
+    </footer>
+
+    <!-- JAVASCRIPT LOGIC -->
+    <script>
+        // Storage Keys
+        const KEY_SUMATIF = "smpn21_bk_sumatif_v3";
+        const KEY_FORMATIF = "smpn21_bk_formatif_v3";
+        const KEY_VIDEO = "smpn21_bk_video_v3";
+
+        // Sound State (Web Audio API)
+        let soundEnabled = true;
+        function playTone(freq, type = 'sine', duration = 0.15) {
+            if (!soundEnabled) return;
+            try {
+                const ctx = new (window.AudioContext || window.webkitAudioContext)();
+                const osc = ctx.createOscillator();
+                const gain = ctx.createGain();
+                osc.type = type;
+                osc.frequency.setValueAtTime(freq, ctx.currentTime);
+                gain.gain.setValueAtTime(0.08, ctx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + duration);
+                osc.connect(gain);
+                gain.connect(ctx.destination);
+                osc.start();
+                osc.stop(ctx.currentTime + duration);
+            } catch (e) {}
+        }
+
+        function toggleSound() {
+            soundEnabled = !soundEnabled;
+            const btn = document.getElementById('sound-toggle-btn');
+            btn.innerHTML = soundEnabled 
+                ? '<i data-lucide="volume-2" class="w-4 h-4 text-amber-200"></i>'
+                : '<i data-lucide="volume-x" class="w-4 h-4 text-rose-200"></i>';
+            lucide.createIcons();
+            showToast(soundEnabled ? "Efek suara aktif" : "Efek suara dimatikan");
+        }
+
+        // Custom Toast Notification (No alert())
+        function showToast(msg) {
+            const toast = document.getElementById('custom-toast');
+            document.getElementById('toast-message').innerText = msg;
+            toast.classList.remove('hidden');
+            setTimeout(() => {
+                toast.classList.remove('translate-y-4', 'opacity-0');
+            }, 10);
+            setTimeout(() => {
+                toast.classList.add('translate-y-4', 'opacity-0');
+                setTimeout(() => toast.classList.add('hidden'), 300);
+            }, 3200);
+        }
+
+        // Custom Confirm Modal (No confirm())
+        let pendingConfirmAction = null;
+        function openConfirmModal(title, desc, onConfirm) {
+            document.getElementById('modal-title').innerText = title;
+            document.getElementById('modal-desc').innerText = desc;
+            pendingConfirmAction = onConfirm;
+            document.getElementById('custom-modal').classList.remove('hidden');
+        }
+        function closeConfirmModal() {
+            document.getElementById('custom-modal').classList.add('hidden');
+            pendingConfirmAction = null;
+        }
+        document.getElementById('modal-confirm-btn').addEventListener('click', () => {
+            if (pendingConfirmAction) pendingConfirmAction();
+            closeConfirmModal();
+        });
+
+        // Navigation
+        function navigateTo(viewId) {
+            playTone(520, 'sine', 0.08);
+            document.querySelectorAll('.app-view').forEach(el => el.classList.add('hidden'));
+            const target = document.getElementById(`view-${viewId}`);
+            if (target) {
+                target.classList.remove('hidden');
+                target.classList.remove('view-enter');
+                void target.offsetWidth;
+                target.classList.add('view-enter');
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+            }
+            if (viewId === 'rekap') {
+                refreshGuruPanel();
+            }
+        }
+
+        // Materi Sub-Tabs & Flip Cards
+        function switchMateriSubTab(subId) {
+            playTone(440, 'sine', 0.07);
+            document.querySelectorAll('.materi-panel').forEach(p => p.classList.add('hidden'));
+            document.getElementById(`materi-${subId}`).classList.remove('hidden');
+
+            document.querySelectorAll('.materi-sub-btn').forEach(btn => {
+                btn.classList.remove('bg-white', 'text-purple-700', 'shadow-sm', 'font-extrabold');
+                btn.classList.add('text-slate-600', 'font-bold');
+            });
+            const activeBtn = document.getElementById(`btn-${subId}`);
+            activeBtn.classList.add('bg-white', 'text-purple-700', 'shadow-sm', 'font-extrabold');
+            activeBtn.classList.remove('text-slate-600');
+        }
+
+        function flipCard(cardEl) {
+            playTone(600, 'triangle', 0.1);
+            cardEl.classList.toggle('flipped');
+        }
+
+        // Video Response Handling
+        function handleVideoResponseSubmit(e) {
+            e.preventDefault();
+            const name = document.getElementById('video-student-name').value.trim();
+            const classInfo = document.getElementById('video-student-class').value.trim();
+            const comment = document.getElementById('video-student-comment').value.trim();
+
+            if (!name || !classInfo || !comment) return;
+
+            const records = JSON.parse(localStorage.getItem(KEY_VIDEO) || "[]");
+            records.unshift({
+                timestamp: new Date().toLocaleString('id-ID'),
+                name,
+                classInfo,
+                comment
+            });
+            localStorage.setItem(KEY_VIDEO, JSON.stringify(records));
+
+            document.getElementById('video-student-comment').value = '';
+            playTone(720, 'sine', 0.18);
+            showToast("Tanggapan videomu berhasil dikirim & tersimpan!");
+            renderVideoComments();
+        }
+
+        function renderVideoComments() {
+            const records = JSON.parse(localStorage.getItem(KEY_VIDEO) || "[]");
+            document.getElementById('video-comment-count').innerText = records.length;
+            const list = document.getElementById('video-comments-list');
+            if (records.length === 0) {
+                list.innerHTML = `<p class="text-xs text-slate-400 italic">Belum ada tanggapan. Jadilah yang pertama memberikan pendapat!</p>`;
+                return;
+            }
+            list.innerHTML = records.map(r => `
+                <div class="p-3 bg-purple-50/70 rounded-2xl border border-purple-100 space-y-1">
+                    <div class="flex items-center justify-between">
+                        <span class="font-bold text-xs text-purple-900">${r.name} <span class="font-normal text-purple-600">(${r.classInfo})</span></span>
+                        <span class="text-[10px] text-slate-400">${r.timestamp}</span>
+                    </div>
+                    <p class="text-xs text-slate-700 leading-relaxed">${r.comment}</p>
+                </div>
+            `).join('');
+        }
+
+        // ==================== GAME FORMATIF: MISI DETEKTIF REMAJA ====================
+        const detectiveMissions = [
+            {
+                badge: "Kasus 1 • Tekanan Teman Sebaya",
+                scenario: "Sepulang sekolah, sekelompok teman mengajak Raka ikut konvoi motor dan mengejek siswa sekolah lain agar dianggap 'solid' dan pemberani. Sikap detektif remaja yang tepat adalah...",
+                options: [
+                    { text: "Ikut konvoi sebentar saja agar tidak dikucilkan kelompok.", correct: false, feedback: "Kurang tepat! Ikut konvoi liar berisiko membahayakan diri sendiri dan melanggar norma sosial." },
+                    { text: "Menolak dengan tegas namun santun, lalu pulang atau mengikuti kegiatan ekstrakurikuler positif.", correct: true, feedback: "Tepat sekali! Kamu mampu menahan konformitas negatif dan memilih keselamatan diri." }
+                ]
+            },
+            {
+                badge: "Kasus 2 • Ruang Digital & Cyberbullying",
+                scenario: "Di grup chat kelas VIII, ada teman yang menyebarkan foto candid teman lain yang sedang tertidur di kelas dan menjadikannya stiker bahan tertawaan.",
+                options: [
+                    { text: "Menegur secara baik agar stiker dihapus karena melanggar privasi dan prinsip Sekolah Ramah Anak.", correct: true, feedback: "Hebat! Kamu berperan aktif menghentikan cyberbullying dan menjaga kenyamanan teman." },
+                    { text: "Ikut mengirim stiker tersebut karena menganggapnya hanya candaan biasa.", correct: false, feedback: "Hati-hati! Candaan yang mempermalukan orang lain termasuk bentuk perundungan digital." }
+                ]
+            },
+            {
+                badge: "Kasus 3 • Regulasi Emosi Remaja",
+                scenario: "Nadia merasa sangat kesal karena pendapatnya tidak dipakai saat kerja kelompok. Hormon emosinya memuncak dan ia ingin membentak ketua kelompok.",
+                options: [
+                    { text: "Langsung marah dan meninggalkan kelompok agar teman-temannya merasa bersalah.", correct: false, feedback: "Reaksi impulsif justru memperkeruh suasana dan menghambat kerja sama." },
+                    { text: "Mengambil jeda tarik napas 10 detik, menenangkan diri, lalu menyampaikan usulan dengan kepala dingin.", correct: true, feedback: "Luar biasa! Mengaktifkan prefrontal cortex dengan jeda sejenak membantu mengendalikan emosi." }
+                ]
+            },
+            {
+                badge: "Kasus 4 • Pencarian Identitas Diri",
+                scenario: "Dimas ingin terlihat keren dan dewasa di hadapan teman-temannya sehingga ia tergoda mencoba rokok elektrik (vape) di warung dekat sekolah.",
+                options: [
+                    { text: "Menyadari bahwa kedewasaan diukur dari prestasi dan tanggung jawab, bukan dari merusak kesehatan.", correct: true, feedback: "Benar! Pencarian jati diri yang sehat diwujudkan lewat bakat, karya, dan perilaku positif." },
+                    { text: "Mencoba vape agar diterima dalam pergaulan anak populer.", correct: false, feedback: "Rasa ingin tahu terhadap zat adiktif dapat merusak kesehatan dan memicu kenakalan remaja." }
+                ]
+            },
+            {
+                badge: "Kasus 5 • Inklusivitas Sekolah Ramah Anak",
+                scenario: "Saat pembagian kelompok olahraga, ada seorang teman yang pendiam dan sering tidak dipilih oleh kelompok mana pun.",
+                options: [
+                    { text: "Mengajaknya bergabung ke kelompokmu dengan ramah dan memberikan peran yang sesuai kemampuannya.", correct: true, feedback: "Keren! Inilah wujud nyata Sekolah Ramah Anak yang inklusif dan bebas diskriminasi." },
+                    { text: "Membiarkannya saja karena takut kelompokmu kalah bertanding.", correct: false, feedback: "Mengucilkan teman bertentangan dengan nilai empati dan Sekolah Ramah Anak." }
+                ]
+            },
+            {
+                badge: "Kasus 6 • Egosentrisme (Personal Fable)",
+                scenario: "Bima merasa dirinya kebal aturan dan nekat melompati pagar sekolah saat jam pelajaran kosong demi konten media sosial.",
+                options: [
+                    { text: "Mengingatkan Bima bahwa tindakan nekat demi konten sangat berbahaya bagi keselamatan dan melanggar tata tertib.", correct: true, feedback: "Sempurna! Kamu berhasil mematahkan ilusi 'kebal bahaya' (personal fable) pada remaja." },
+                    { text: "Merekam aksi Bima agar cepat viral di media sosial.", correct: false, feedback: "Merekam dan mendukung perilaku berbahaya sama saja menjerumuskan teman." }
+                ]
+            }
+        ];
+
+        let gameState = {
+            name: "",
+            classInfo: "",
+            index: 0,
+            score: 0,
+            streak: 0,
+            answered: false
+        };
+
+        function startDetectiveGame() {
+            const name = document.getElementById('game-student-name').value.trim();
+            const classInfo = document.getElementById('game-student-class').value.trim();
+            if (!name || !classInfo) {
+                showToast("Isi Nama Lengkap dan Kelas/Absen dulu ya sebelum mulai misi!");
+                return;
+            }
+            gameState = { name, classInfo, index: 0, score: 0, streak: 0, answered: false };
+            document.getElementById('game-start-screen').classList.add('hidden');
+            document.getElementById('game-end-screen').classList.add('hidden');
+            document.getElementById('game-play-screen').classList.remove('hidden');
+            document.getElementById('game-hud').classList.remove('hidden');
+            updateGameHUD();
+            renderGameMission();
+        }
+
+        function updateGameHUD() {
+            document.getElementById('game-score-display').innerText = gameState.score;
+            document.getElementById('game-streak-display').innerText = gameState.streak;
+        }
+
+        function renderGameMission() {
+            const m = detectiveMissions[gameState.index];
+            gameState.answered = false;
+            document.getElementById('game-mission-counter').innerText = `Misi ${gameState.index + 1} dari ${detectiveMissions.length}`;
+            document.getElementById('game-progress-bar').style.width = `${((gameState.index + 1) / detectiveMissions.length) * 100}%`;
+            document.getElementById('game-case-badge').innerText = m.badge;
+            document.getElementById('game-scenario-text').innerText = m.scenario;
+            document.getElementById('game-feedback-box').classList.add('hidden');
+
+            const optContainer = document.getElementById('game-options-container');
+            optContainer.innerHTML = m.options.map((opt, idx) => `
+                <button onclick="selectGameOption(${idx})" id="game-opt-${idx}" class="p-4 text-left rounded-2xl border-2 border-slate-200 hover:border-emerald-400 bg-slate-50 hover:bg-emerald-50/50 transition text-xs md:text-sm font-semibold text-slate-700 leading-relaxed">
+                    ${opt.text}
+                </button>
+            `).join('');
+            lucide.createIcons();
+        }
+
+        function selectGameOption(idx) {
+            if (gameState.answered) return;
+            gameState.answered = true;
+
+            const m = detectiveMissions[gameState.index];
+            const chosen = m.options[idx];
+            const fbBox = document.getElementById('game-feedback-box');
+            const fbTitle = document.getElementById('game-feedback-title');
+            const fbDesc = document.getElementById('game-feedback-desc');
+
+            if (chosen.correct) {
+                gameState.streak++;
+                gameState.score += 15 + (gameState.streak * 2);
+                playTone(780, 'sine', 0.2);
+                document.getElementById(`game-opt-${idx}`).classList.add('border-emerald-500', 'bg-emerald-100', 'text-emerald-950');
+                fbBox.className = "p-4 rounded-2xl text-xs md:text-sm space-y-2 bg-emerald-50 border border-emerald-300 text-emerald-900";
+                fbTitle.innerText = "✔ Analisis Detektif Tepat!";
+            } else {
+                gameState.streak = 0;
+                playTone(220, 'sawtooth', 0.22);
+                document.getElementById(`game-opt-${idx}`).classList.add('border-rose-500', 'bg-rose-100', 'text-rose-950');
+                fbBox.className = "p-4 rounded-2xl text-xs md:text-sm space-y-2 bg-rose-50 border border-rose-300 text-rose-900";
+                fbTitle.innerText = "✖ Kurang Tepat, Coba Perhatikan Lagi:";
+            }
+
+            fbDesc.innerText = chosen.feedback;
+            fbBox.classList.remove('hidden');
+            updateGameHUD();
+        }
+
+        function nextGameMission() {
+            if (gameState.index + 1 < detectiveMissions.length) {
+                gameState.index++;
+                renderGameMission();
+            } else {
+                finishDetectiveGame();
+            }
+        }
+
+        function finishDetectiveGame() {
+            document.getElementById('game-play-screen').classList.add('hidden');
+            document.getElementById('game-end-screen').classList.remove('hidden');
+            document.getElementById('game-final-score').innerText = `${gameState.score} Poin`;
+
+            const badge = gameState.score >= 90 ? "Detektif Utama Sekolah Ramah Anak 🏆" : "Detektif Muda Tangguh ⭐";
+            document.getElementById('game-final-badge').innerText = badge;
+
+            const records = JSON.parse(localStorage.getItem(KEY_FORMATIF) || "[]");
+            records.unshift({
+                timestamp: new Date().toLocaleString('id-ID'),
+                name: gameState.name,
+                classInfo: gameState.classInfo,
+                score: gameState.score,
+                predicate: badge
+            });
+            localStorage.setItem(KEY_FORMATIF, JSON.stringify(records));
+
+            if (typeof confetti === 'function') {
+                confetti({ particleCount: 70, spread: 60, origin: { y: 0.6 } });
+            }
+        }
+
+        function resetDetectiveGame() {
+            document.getElementById('game-end-screen').classList.add('hidden');
+            document.getElementById('game-hud').classList.add('hidden');
+            document.getElementById('game-start-screen').classList.remove('hidden');
+        }
+
+        // ==================== ASESMEN SUMATIF (10 SOAL BERSTIMULUS L1-L3) ====================
+        const sumatifQuestions = [
+            {
+                id: 1,
+                level: "L1 (Mengingat/Memahami)",
+                stimulus: "Menurut John W. Santrock dan Elizabeth B. Hurlock, masa remaja awal (usia SMP) sering disebut sebagai periode 'Storm and Stress' (badai dan tekanan).",
+                question: "Apa makna utama dari istilah 'Storm and Stress' pada perkembangan masa remaja?",
+                options: [
+                    "Masa ketika remaja tidak lagi membutuhkan bimbingan orang tua dan guru.",
+                    "Masa meningkatnya gejolak emosi akibat perubahan fisik, hormonal, dan tuntutan sosial.",
+                    "Masa ketika remaja selalu melakukan pelanggaran hukum di sekolah.",
+                    "Masa menurunnya kemampuan berpikir abstrak pada siswa SMP."
+                ],
+                answer: 1,
+                explanation: "Storm and Stress menggambarkan tingginya fluktuasi emosi remaja akibat perubahan biologis (pubertas) dan penyesuaian sosial."
+            },
+            {
+                id: 2,
+                level: "L1 (Mengingat/Memahami)",
+                stimulus: "Dalam teori perkembangan psikososial Erik Erikson, remaja kelas VIII SMP berada pada tahap pencarian jati diri.",
+                question: "Krisis perkembangan utama yang dihadapi remaja menurut Erik Erikson adalah...",
+                options: [
+                    "Trust vs. Mistrust",
+                    "Initiative vs. Guilt",
+                    "Identity vs. Role Confusion (Identitas vs. Kebingungan Peran)",
+                    "Integrity vs. Despair"
+                ],
+                answer: 2,
+                explanation: "Remaja berada pada tahap Identity vs. Role Confusion, yaitu proses menemukan nilai diri, minat, dan peran sosial."
+            },
+            {
+                id: 3,
+                level: "L1 (Mengingat/Memahami)",
+                stimulus: "Secara neuropsikologi remaja, terjadi perbedaan kecepatan perkembangan antara sistem limbik (amygdala) dan korteks prefrontal (prefrontal cortex).",
+                question: "Dampak dari lebih cepatnya perkembangan amygdala dibanding prefrontal cortex pada remaja adalah...",
+                options: [
+                    "Remaja cenderung bertindak impulsif dan emosional sebelum mempertimbangkan risiko jangka panjang.",
+                    "Remaja mampu membuat keputusan yang selalu logis dan tenang di setiap situasi.",
+                    "Remaja tidak memiliki rasa ingin tahu terhadap hal-hal baru.",
+                    "Remaja menjadi tidak peduli dengan penerimaan teman sebaya."
+                ],
+                answer: 0,
+                explanation: "Amygdala mengatur emosi dan impuls, sedangkan prefrontal cortex mengatur kontrol diri dan pertimbangan risiko."
+            },
+            {
+                id: 4,
+                level: "L2 (Mengaplikasikan)",
+                stimulus: "Reno diajak oleh teman-teman nongkrongnya untuk membolos pada jam pelajaran terakhir agar bisa bermain game online bersama. Reno takut dianggap tidak setia kawan jika menolak.",
+                question: "Tindakan asertif yang paling tepat dilakukan Reno adalah...",
+                options: [
+                    "Ikut membolos sekali saja untuk membuktikan kesetiakawanan.",
+                    "Menolak ajakan tersebut secara tegas dan santun dengan menjelaskan bahwa ia ingin mengikuti pelajaran hingga selesai.",
+                    "Memarahi teman-temannya dan melaporkan mereka ke polisi.",
+                    "Pura-pura sakit agar diizinkan pulang lebih awal."
+                ],
+                answer: 1,
+                explanation: "Komunikasi asertif memungkinkan remaja menolak tekanan teman sebaya (peer pressure) secara tegas tanpa bersikap agresif."
+            },
+            {
+                id: 5,
+                level: "L2 (Mengaplikasikan)",
+                stimulus: "Sari merasa sangat marah karena dituduh menyebarkan rahasia oleh sahabatnya di kelas. Jantungnya berdebar kencang dan ia ingin membalas dengan kata-kata kasar.",
+                question: "Penerapan strategi regulasi emosi yang tepat bagi Sari adalah...",
+                options: [
+                    "Langsung menulis sindiran di media sosial agar semua teman tahu.",
+                    "Melakukan jeda 10 detik, menarik napas dalam untuk menenangkan diri, lalu mengajak sahabatnya berdialog secara baik-baik.",
+                    "Mendiamkan sahabatnya sepanjang semester tanpa penjelasan.",
+                    "Meminta teman-teman lain untuk memusuhi sahabatnya."
+                ],
+                answer: 1,
+                explanation: "Jeda 10 detik membantu meredakan lonjakan emosi sehingga masalah dapat diselesaikan secara konstruktif."
+            },
+            {
+                id: 6,
+                level: "L2 (Mengaplikasikan)",
+                stimulus: "SMP Negeri 21 Semarang berkomitmen mewujudkan Sekolah Ramah Anak (SRA) yang aman, inklusif, dan bebas dari perundungan.",
+                question: "Perilaku murid kelas VIII yang mencerminkan penerapan nilai SRA di lingkungan sekolah adalah...",
+                options: [
+                    "Membuat kelompok pertemanan eksklusif dan mengejek siswa yang berbeda logat bicara.",
+                    "Menghargai perbedaan teman, menyapa dengan ramah, dan berani melapor ke Guru BK jika melihat perundungan.",
+                    "Membiarkan tindakan ejekan fisik asalkan tidak terjadi pada dirinya sendiri.",
+                    "Menyelesaikan perselisihan antarkelas dengan perkelahian."
+                ],
+                answer: 1,
+                explanation: "Sekolah Ramah Anak menuntut partisipasi aktif murid untuk menjaga inklusivitas dan mencegah perundungan."
+            },
+            {
+                id: 7,
+                level: "L3 (Menganalisis)",
+                stimulus: "Andi sering mengendarai sepeda motor dengan kecepatan tinggi tanpa helm karena yakin dirinya tidak akan pernah mengalami kecelakaan seperti orang lain.",
+                question: "Berdasarkan konsep kognitif remaja David Elkind, fenomena psikologis yang dialami Andi disebut...",
+                options: [
+                    "Imaginary Audience (merasa selalu ditonton)",
+                    "Personal Fable (keyakinan keliru bahwa dirinya unik dan kebal terhadap bahaya)",
+                    "Konformitas Positif",
+                    "Empati Sosial"
+                ],
+                answer: 1,
+                explanation: "Personal fable adalah bagian dari egosentrisme remaja yang membuat remaja merasa kebal risiko sehingga berani bertindak nekat."
+            },
+            {
+                id: 8,
+                level: "L3 (Menganalisis)",
+                stimulus: "Perhatikan kasus berikut: Seorang siswa kelas VIII melakukan aksi vandalisme (mencoret dinding fasilitas umum) bersama gengnya. Saat ditanya alasannya, ia mengaku hanya ikut-ikutan agar diakui sebagai anggota kelompok.",
+                question: "Analisis faktor penyebab kenakalan remaja pada kasus tersebut adalah...",
+                options: [
+                    "Konformitas negatif teman sebaya dan kebutuhan akan pengakuan sosial yang tidak terarah.",
+                    "Kematangan kontrol diri yang sudah berkembang sempurna.",
+                    "Pola asuh keluarga yang sangat demokratis dan suportif.",
+                    "Tingginya kesadaran hukum pada remaja."
+                ],
+                answer: 0,
+                explanation: "Kebutuhan diterima oleh kelompok sebaya (peer acceptance) yang tidak dibarengi kontrol diri memicu konformitas negatif."
+            },
+            {
+                id: 9,
+                level: "L3 (Mengevaluasi)",
+                stimulus: "Sebuah akun anonim di media sosial mengunggah daftar 'siswa paling aneh' di sekolah. Beberapa siswa ikut berkomentar jahat dengan alasan 'cuma bercanda untuk hiburan'.",
+                question: "Evaluasi yang paling tepat terhadap fenomena digital tersebut adalah...",
+                options: [
+                    "Komentar tersebut wajar karena dilakukan di ruang publik media sosial.",
+                    "Tindakan tersebut merupakan cyberbullying yang merusak kesehatan mental korban dan melanggar prinsip Sekolah Ramah Anak.",
+                    "Korban seharusnya tidak perlu merasa tersinggung karena hanya candaan.",
+                    "Akun anonim membantu siswa mengenal kekurangan dirinya."
+                ],
+                answer: 1,
+                explanation: "Perundungan siber (cyberbullying) berdampak serius pada psikologis remaja dan bertentangan dengan perlindungan hak anak."
+            },
+            {
+                id: 10,
+                level: "L3 (Mengevaluasi)",
+                stimulus: "Untuk mencegah kenakalan remaja di tingkat SMP, OSIS dan Guru BK merancang program 'Sebaya Peduli & Positif'.",
+                question: "Manakah rancangan kegiatan yang paling efektif dan sesuai dengan karakteristik perkembangan remaja?",
+                options: [
+                    "Memberikan hukuman fisik di depan umum bagi siswa yang melanggar tata tertib.",
+                    "Menyalurkan energi dan pencarian identitas remaja melalui klub minat-bakat, konseling sebaya, dan kampanye anti-bullying.",
+                    "Melarang seluruh siswa berinteraksi dengan teman di luar jam pelajaran.",
+                    "Membiarkan siswa menyelesaikan konflik mereka sendiri tanpa pendampingan guru."
+                ],
+                answer: 1,
+                explanation: "Penyaluran potensi positif dan dukungan teman sebaya memenuhi kebutuhan identitas remaja sekaligus mencegah perilaku menyimpang."
+            }
+        ];
+
+        function renderSumatifQuiz() {
+            const container = document.getElementById('sumatif-questions-list');
+            container.innerHTML = sumatifQuestions.map((q, idx) => `
+                <div class="p-5 bg-white rounded-3xl border border-slate-200/90 shadow-xs space-y-3">
+                    <div class="flex items-center justify-between gap-2">
+                        <span class="text-xs font-extrabold text-slate-800 bg-slate-100 px-3 py-1 rounded-full">Soal ${idx + 1} / 10</span>
+                        <span class="text-[11px] font-bold text-amber-800 bg-amber-100 px-3 py-1 rounded-full">${q.level}</span>
+                    </div>
+                    <div class="p-3.5 bg-amber-50/70 border-l-4 border-amber-400 rounded-r-2xl text-xs md:text-sm text-slate-700 italic">
+                        <strong>Stimulus:</strong> ${q.stimulus}
+                    </div>
+                    <p class="font-bold text-slate-800 text-sm md:text-base">${q.question}</p>
+                    <div class="space-y-2">
+                        ${q.options.map((opt, oIdx) => `
+                            <label class="flex items-start gap-3 p-3 rounded-2xl border border-slate-200 hover:bg-amber-50/40 cursor-pointer transition text-xs md:text-sm">
+                                <input type="radio" name="sumatif-q-${q.id}" value="${oIdx}" class="mt-0.5 text-amber-500 focus:ring-amber-400">
+                                <span>${opt}</span>
+                            </label>
+                        `).join('')}
+                    </div>
+                    <div id="sumatif-exp-${q.id}" class="hidden p-3.5 bg-indigo-50 border border-indigo-200 rounded-2xl text-xs text-indigo-950">
+                        <strong>Kunci & Pembahasan:</strong> ${q.explanation}
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function submitSumatifQuiz() {
+            const name = document.getElementById('sumatif-student-name').value.trim();
+            const classInfo = document.getElementById('sumatif-student-class').value.trim();
+            if (!name || !classInfo) {
+                showToast("Mohon isi Nama Lengkap dan Kelas/No. Absen terlebih dahulu!");
+                document.getElementById('sumatif-student-name').focus();
+                return;
+            }
+
+            let correct = 0;
+            sumatifQuestions.forEach(q => {
+                const selected = document.querySelector(`input[name="sumatif-q-${q.id}"]:checked`);
+                document.getElementById(`sumatif-exp-${q.id}`).classList.remove('hidden');
+                if (selected && parseInt(selected.value) === q.answer) {
+                    correct++;
+                }
+            });
+
+            const score = correct * 10;
+            document.getElementById('sumatif-final-score').innerText = `${score} / 100`;
+            document.getElementById('sumatif-feedback-msg').innerText = score >= 75
+                ? `Luar biasa, ${name}! Kamu menjawab ${correct} dari 10 soal dengan tepat. Kamu sudah memahami karakteristik perkembangan remaja dan pencegahan kenakalan remaja!`
+                : `Terima kasih telah mengerjakan, ${name}! Kamu menjawab ${correct} dari 10 soal dengan tepat. Yuk pelajari pembahasannya di atas agar semakin paham.`;
+
+            const records = JSON.parse(localStorage.getItem(KEY_SUMATIF) || "[]");
+            records.unshift({
+                timestamp: new Date().toLocaleString('id-ID'),
+                name,
+                classInfo,
+                score,
+                status: score >= 75 ? "Tuntas (Sangat Baik)" : "Perlu Penguatan"
+            });
+            localStorage.setItem(KEY_SUMATIF, JSON.stringify(records));
+
+            const resBox = document.getElementById('sumatif-result-box');
+            resBox.classList.remove('hidden');
+            playTone(760, 'sine', 0.25);
+            if (typeof confetti === 'function') {
+                confetti({ particleCount: 80, spread: 70, origin: { y: 0.6 } });
+            }
+            resBox.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+
+        function resetSumatifQuiz() {
+            document.querySelectorAll('#sumatif-questions-list input[type="radio"]').forEach(r => r.checked = false);
+            sumatifQuestions.forEach(q => document.getElementById(`sumatif-exp-${q.id}`).classList.add('hidden'));
+            document.getElementById('sumatif-result-box').classList.add('hidden');
+            navigateTo('sumatif');
+        }
+
+        // ==================== PORTAL GURU (guru21 / 1234) ====================
+        function handleGuruLogin(e) {
+            e.preventDefault();
+            const u = document.getElementById('guru-username').value.trim();
+            const p = document.getElementById('guru-password').value.trim();
+            if (u === "guru21" && p === "1234") {
+                sessionStorage.setItem("smpn21_guru_auth", "1");
+                document.getElementById('guru-login-error').classList.add('hidden');
+                refreshGuruPanel();
+                showToast("Selamat datang di Portal Rekap Guru BK!");
+            } else {
+                document.getElementById('guru-login-error').classList.remove('hidden');
+                playTone(200, 'sawtooth', 0.2);
+            }
+        }
+
+        function handleGuruLogout() {
+            sessionStorage.removeItem("smpn21_guru_auth");
+            refreshGuruPanel();
+        }
+
+        function refreshGuruPanel() {
+            const isAuth = sessionStorage.getItem("smpn21_guru_auth") === "1";
+            if (isAuth) {
+                document.getElementById('guru-login-panel').classList.add('hidden');
+                document.getElementById('guru-dashboard-panel').classList.remove('hidden');
+                renderGuruTables();
+            } else {
+                document.getElementById('guru-login-panel').classList.remove('hidden');
+                document.getElementById('guru-dashboard-panel').classList.add('hidden');
+            }
+        }
+
+        function renderGuruTables() {
+            const sumatif = JSON.parse(localStorage.getItem(KEY_SUMATIF) || "[]");
+            const formatif = JSON.parse(localStorage.getItem(KEY_FORMATIF) || "[]");
+            const video = JSON.parse(localStorage.getItem(KEY_VIDEO) || "[]");
+
+            document.getElementById('count-sumatif').innerText = `${sumatif.length} Data`;
+            document.getElementById('count-formatif').innerText = `${formatif.length} Data`;
+            document.getElementById('count-video').innerText = `${video.length} Data`;
+
+            document.getElementById('tbody-sumatif').innerHTML = sumatif.length === 0
+                ? `<tr><td colspan="5" class="p-4 text-center text-slate-400 italic">Belum ada data asesmen sumatif.</td></tr>`
+                : sumatif.map(r => `
+                    <tr class="hover:bg-slate-50">
+                        <td class="p-3 text-slate-500">${r.timestamp}</td>
+                        <td class="p-3 font-bold text-slate-800">${r.name}</td>
+                        <td class="p-3">${r.classInfo}</td>
+                        <td class="p-3 text-center font-extrabold text-amber-600">${r.score}</td>
+                        <td class="p-3"><span class="px-2.5 py-0.5 rounded-full text-[10px] font-bold ${r.score >= 75 ? 'bg-emerald-100 text-emerald-800' : 'bg-rose-100 text-rose-800'}">${r.status}</span></td>
+                    </tr>
+                `).join('');
+
+            document.getElementById('tbody-formatif').innerHTML = formatif.length === 0
+                ? `<tr><td colspan="5" class="p-4 text-center text-slate-400 italic">Belum ada data permainan formatif.</td></tr>`
+                : formatif.map(r => `
+                    <tr class="hover:bg-slate-50">
+                        <td class="p-3 text-slate-500">${r.timestamp}</td>
+                        <td class="p-3 font-bold text-slate-800">${r.name}</td>
+                        <td class="p-3">${r.classInfo}</td>
+                        <td class="p-3 text-center font-extrabold text-emerald-600">${r.score}</td>
+                        <td class="p-3 font-semibold text-slate-700">${r.predicate}</td>
+                    </tr>
+                `).join('');
+
+            document.getElementById('tbody-video').innerHTML = video.length === 0
+                ? `<tr><td colspan="4" class="p-4 text-center text-slate-400 italic">Belum ada tanggapan video dari murid.</td></tr>`
+                : video.map(r => `
+                    <tr class="hover:bg-slate-50">
+                        <td class="p-3 text-slate-500">${r.timestamp}</td>
+                        <td class="p-3 font-bold text-slate-800">${r.name}</td>
+                        <td class="p-3">${r.classInfo}</td>
+                        <td class="p-3 text-slate-700">${r.comment}</td>
+                    </tr>
+                `).join('');
+        }
+
+        function downloadExcelReport() {
+            const sumatif = JSON.parse(localStorage.getItem(KEY_SUMATIF) || "[]");
+            const formatif = JSON.parse(localStorage.getItem(KEY_FORMATIF) || "[]");
+            const video = JSON.parse(localStorage.getItem(KEY_VIDEO) || "[]");
+
+            if (sumatif.length === 0 && formatif.length === 0 && video.length === 0) {
+                showToast("Belum ada data murid untuk diunduh!");
+                return;
+            }
+
+            const wb = XLSX.utils.book_new();
+
+            const ws1 = XLSX.utils.aoa_to_sheet([
+                ["Waktu", "Nama Murid", "Kelas / Absen", "Skor Sumatif", "Keterangan"],
+                ...sumatif.map(r => [r.timestamp, r.name, r.classInfo, r.score, r.status])
+            ]);
+            XLSX.utils.book_append_sheet(wb, ws1, "Nilai Sumatif");
+
+            const ws2 = XLSX.utils.aoa_to_sheet([
+                ["Waktu", "Nama Murid", "Kelas / Absen", "Skor Game Formatif", "Predikat"],
+                ...formatif.map(r => [r.timestamp, r.name, r.classInfo, r.score, r.predicate])
+            ]);
+            XLSX.utils.book_append_sheet(wb, ws2, "Game Formatif");
+
+            const ws3 = XLSX.utils.aoa_to_sheet([
+                ["Waktu", "Nama Murid", "Kelas / Absen", "Tanggapan Video"],
+                ...video.map(r => [r.timestamp, r.name, r.classInfo, r.comment])
+            ]);
+            XLSX.utils.book_append_sheet(wb, ws3, "Tanggapan Video");
+
+            XLSX.writeFile(wb, "Rekap_BK_SMPN21_Semarang.xlsx");
+            showToast("File Excel berhasil diunduh!");
+        }
+
+        function confirmClearAllRecords() {
+            openConfirmModal(
+                "Hapus Semua Rekap Data?",
+                "Seluruh data nilai sumatif, skor game formatif, dan tanggapan video di browser ini akan dihapus permanen.",
+                () => {
+                    localStorage.removeItem(KEY_SUMATIF);
+                    localStorage.removeItem(KEY_FORMATIF);
+                    localStorage.removeItem(KEY_VIDEO);
+                    renderGuruTables();
+                    renderVideoComments();
+                    showToast("Seluruh data rekap berhasil dibersihkan.");
+                }
+            );
+        }
+
+        // Initial Load
+        document.addEventListener('DOMContentLoaded', () => {
+            lucide.createIcons();
+            renderSumatifQuiz();
+            renderVideoComments();
+        });
+    </script>
+</body>
+</html>
